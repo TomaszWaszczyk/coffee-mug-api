@@ -1,5 +1,5 @@
 import { Router } from 'express';
-import { createProduct, restockProduct, sellProduct } from '../../application/commands';
+import { createProduct, restockProduct, sellProduct } from '../../application/commands/';
 import { getProducts } from '../../application/queries/getProducts.query'; 
 import { productValidation, restockValidation, sellValidation } from '../../infrastructure/validation/schemas';
 

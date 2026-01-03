@@ -10,7 +10,7 @@ export interface CreateOrderCommand {
 }
 
 export const createOrder = async (cmd: CreateOrderCommand) => {
-  // 1. WALIDACJA + POBRANIE PRODUKTÓW (bez sesji)
+  // validation + fetch products
   const products = await ProductModel.find({
     _id: { $in: cmd.products.map(p => p.productId) }
   });
@@ -19,7 +19,7 @@ export const createOrder = async (cmd: CreateOrderCommand) => {
     throw new Error('Some products not found');
   }
 
-  // 2. WALIDACJA STOCKU + PRZYGOTUJ ITEMS
+
   const items: OrderItem[] = [];
   let totalQuantity = 0;
   const categories = new Set<string>();
@@ -54,7 +54,7 @@ export const createOrder = async (cmd: CreateOrderCommand) => {
     if (product.category) categories.add(product.category);
   }
 
-  // 3. OBLICZ NAJLEPSZY RABAT
+  // calculate discount
   const discount = calculateDiscount(
     totalQuantity,
     Array.from(categories),
@@ -62,11 +62,11 @@ export const createOrder = async (cmd: CreateOrderCommand) => {
     new Date()
   );
 
-  // 4. OBLICZ TOTAL PO RABACIE
+  // calculate total with discount
   const subtotal = items.reduce((sum, item) => sum + item.lineTotal, 0);
   const total = subtotal * (1 - discount.discount);
 
-  // 5. ATOMIC BULK UPDATE STOCK + SAVE ORDER
+  // ATOMIC BULK UPDATE STOCK + SAVE ORDER
   const bulkOps = cmd.products.map(orderItem => ({
     updateOne: {
       filter: { 
@@ -79,15 +79,13 @@ export const createOrder = async (cmd: CreateOrderCommand) => {
     }
   }));
 
-  // WYKONAJ ATOMICZNIE wszystkie operacje stocku
+
   const bulkResult = await ProductModel.bulkWrite(bulkOps, { ordered: true });
 
-  // SPRAWDŹ CZY WSZYSTKIE SIE POWIODŁY
   if (bulkResult.modifiedCount !== cmd.products.length) {
     throw new Error('Failed to update stock for some products (race condition)');
   }
 
-  // 6. ZAPISZ ORDER (już po udanej aktualizacji stocku)
   const newOrder = new OrderModel({
     customerId: cmd.customerId,
     location: cmd.location,

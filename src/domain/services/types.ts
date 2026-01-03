@@ -10,7 +10,6 @@ export interface OrderItem {
   lineTotal: number;     // unitPrice * quantity
 }
 
-// Input dla komend (z request body)
 export interface CreateOrderInput {
   customerId: string;
   location: 'US' | 'EU' | 'ASIA';
