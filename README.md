@@ -6,6 +6,48 @@ A RESTful API for managing product inventory with comprehensive order management
 
 I used one instance of MongoDB (in production should be two instances of database - in two different locations). I have omitted deploying two instances of database due to time constraints.
 
+- **Assumption**: Categories defined for holiday sale targeting
+
+### Product Categories
+- `coffee` - Coffee beans/grounds
+- `mug` - Drinkware
+- `accessories` - Related products
+- **Used for**: Targeted holiday promotions and inventory management
+
+---
+
+## Pricing & Discounts
+
+### Location-Based Pricing Adjustments
+- **EU**: +15% VAT (no discount applied, pricing reflects VAT)
+- **ASIA**: -5% discount
+- **US**: Standard pricing (no adjustment)
+- **Assumption**: These adjustments are applied per-item before discount calculation
+
+### Discount Types (Applied Independently)
+1. **VOLUME** - Based on total quantity ordered
+   - ≥50 units: 30% discount
+   - ≥10 units: 20% discount
+   - ≥5 units: 10% discount
+
+2. **BLACK_FRIDAY** - Flat 25% discount
+   - Applied on Black Friday date
+
+3. **HOLIDAY** - Seasonal promotion (15% discount)
+   - Applied on holiday dates
+   - Only for `coffee` and `mug` categories
+   - Does NOT apply to `accessories`
+
+4. **LOCATION** - Regional discount
+   - Asia gets 5% discount
+   - EU and US get no additional discount (VAT handled separately)
+
+### Discount Logic
+- **Best-wins strategy**: Only the highest discount is applied per order
+- **Assumption**: Discounts cannot be combined (single best discount selected)
+- **Applied to**: Order total (after location price adjustment)
+
+
 ## Architecture & Design Patterns
 
 ```
